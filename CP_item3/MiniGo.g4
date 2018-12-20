@@ -34,10 +34,10 @@ return_stmt    : RETURN expr ',' expr
          | RETURN ;
 local_decl : VAR IDENT type_spec
              | VAR IDENT '[' LITERAL ']' type_spec;
-expr      : (LITERAL|IDENT)
-         | '(' expr ')' 
-         | IDENT '[' expr ']' 
-         | IDENT '(' args ')' 
+expr      : IDENT '(' args ')'
+         | (LITERAL|IDENT)
+         | '(' expr ')'
+         | IDENT '[' expr ']'
          | FMT '.' IDENT '(' args ')' 
          | op=('-'|'+'|'--'|'++'|'!') expr 
          | left=expr op=('*'|'/'|'%') right=expr 
