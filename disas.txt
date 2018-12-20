@@ -2,16 +2,16 @@
 (gdb) disas main
 Dump of assembler code for function main:
    0x0804840b <+0>:	lea    ecx,[esp+0x4]
-   0x0804840f <+4>:	and    esp,0xfffffff0
+   0x0804840f <+4>:	and    esp,0xfffffff0 
    0x08048412 <+7>:	push   DWORD PTR [ecx-0x4]
    0x08048415 <+10>:	push   ebp
    0x08048416 <+11>:	mov    ebp,esp
    0x08048418 <+13>:	push   ecx
-   0x08048419 <+14>:	sub    esp,0x14
-   0x0804841c <+17>:	mov    DWORD PTR [ebp-0xc],0x0
-   0x08048423 <+24>:	mov    DWORD PTR [ebp-0x10],0x19a
+   0x08048419 <+14>:	sub    esp,0x14 // -20
+   0x0804841c <+17>:	mov    DWORD PTR [ebp-0xc],0x0 // ebp-12(z) = 0
+   0x08048423 <+24>:	mov    DWORD PTR [ebp-0x10],0x19a // ebp-16(x) = 410
    0x0804842a <+31>:	jmp    0x8048441 <main+54>
-   0x0804842c <+33>:	mov    eax,DWORD PTR [ebp-0x10]
+   0x0804842c <+33>:	mov    eax,DWORD PTR [ebp-0x10] 
    0x0804842f <+36>:	mov    edx,eax
    0x08048431 <+38>:	shr    edx,0x1f
    0x08048434 <+41>:	add    eax,edx
@@ -19,8 +19,8 @@ Dump of assembler code for function main:
    0x08048438 <+45>:	mov    DWORD PTR [ebp-0x10],eax
    0x0804843b <+48>:	mov    eax,DWORD PTR [ebp-0x10]
    0x0804843e <+51>:	add    DWORD PTR [ebp-0xc],eax
-   0x08048441 <+54>:	cmp    DWORD PTR [ebp-0x10],0x0
-   0x08048445 <+58>:	jg     0x804842c <main+33>
+   0x08048441 <+54>:	cmp    DWORD PTR [ebp-0x10],0x0 // x, 0 compare
+   0x08048445 <+58>:	jg     0x804842c <main+33> // if x > 0
    0x08048447 <+60>:	sub    esp,0x8
 ---Type <return> to continue, or q <return> to quit---
    0x0804844a <+63>:	push   DWORD PTR [ebp-0xc]
