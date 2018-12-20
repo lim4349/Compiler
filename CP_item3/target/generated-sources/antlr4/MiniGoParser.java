@@ -1199,19 +1199,19 @@ public class MiniGoParser extends Parser {
 		public ExprContext left;
 		public Token op;
 		public ExprContext right;
+		public TerminalNode IDENT() { return getToken(MiniGoParser.IDENT, 0); }
+		public ArgsContext args() {
+			return getRuleContext(ArgsContext.class,0);
+		}
 		public List<TerminalNode> LITERAL() { return getTokens(MiniGoParser.LITERAL); }
 		public TerminalNode LITERAL(int i) {
 			return getToken(MiniGoParser.LITERAL, i);
 		}
-		public TerminalNode IDENT() { return getToken(MiniGoParser.IDENT, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
-		}
-		public ArgsContext args() {
-			return getRuleContext(ArgsContext.class,0);
 		}
 		public TerminalNode FMT() { return getToken(MiniGoParser.FMT, 0); }
 		public TerminalNode EQ() { return getToken(MiniGoParser.EQ, 0); }
@@ -1256,6 +1256,18 @@ public class MiniGoParser extends Parser {
 			case 1:
 				{
 				setState(198);
+				match(IDENT);
+				setState(199);
+				match(T__3);
+				setState(200);
+				args();
+				setState(201);
+				match(T__4);
+				}
+				break;
+			case 2:
+				{
+				setState(203);
 				_la = _input.LA(1);
 				if ( !(_la==IDENT || _la==LITERAL) ) {
 				_errHandler.recoverInline(this);
@@ -1267,26 +1279,14 @@ public class MiniGoParser extends Parser {
 				}
 				}
 				break;
-			case 2:
-				{
-				setState(199);
-				match(T__3);
-				setState(200);
-				expr(0);
-				setState(201);
-				match(T__4);
-				}
-				break;
 			case 3:
 				{
-				setState(203);
-				match(IDENT);
 				setState(204);
-				match(T__1);
+				match(T__3);
 				setState(205);
 				expr(0);
 				setState(206);
-				match(T__2);
+				match(T__4);
 				}
 				break;
 			case 4:
@@ -1294,11 +1294,11 @@ public class MiniGoParser extends Parser {
 				setState(208);
 				match(IDENT);
 				setState(209);
-				match(T__3);
+				match(T__1);
 				setState(210);
-				args();
+				expr(0);
 				setState(211);
-				match(T__4);
+				match(T__2);
 				}
 				break;
 			case 5:
@@ -1635,30 +1635,29 @@ public class MiniGoParser extends Parser {
 		"\2\u00bd\u00be\7%\2\2\u00be\u00c6\5\b\5\2\u00bf\u00c0\7\27\2\2\u00c0\u00c1"+
 		"\7%\2\2\u00c1\u00c2\7\4\2\2\u00c2\u00c3\7&\2\2\u00c3\u00c4\7\5\2\2\u00c4"+
 		"\u00c6\5\b\5\2\u00c5\u00bc\3\2\2\2\u00c5\u00bf\3\2\2\2\u00c6\37\3\2\2"+
-		"\2\u00c7\u00c8\b\21\1\2\u00c8\u00ee\t\2\2\2\u00c9\u00ca\7\6\2\2\u00ca"+
-		"\u00cb\5 \21\2\u00cb\u00cc\7\7\2\2\u00cc\u00ee\3\2\2\2\u00cd\u00ce\7%"+
-		"\2\2\u00ce\u00cf\7\4\2\2\u00cf\u00d0\5 \21\2\u00d0\u00d1\7\5\2\2\u00d1"+
-		"\u00ee\3\2\2\2\u00d2\u00d3\7%\2\2\u00d3\u00d4\7\6\2\2\u00d4\u00d5\5\""+
-		"\22\2\u00d5\u00d6\7\7\2\2\u00d6\u00ee\3\2\2\2\u00d7\u00d8\7\31\2\2\u00d8"+
-		"\u00d9\7\13\2\2\u00d9\u00da\7%\2\2\u00da\u00db\7\6\2\2\u00db\u00dc\5\""+
-		"\22\2\u00dc\u00dd\7\7\2\2\u00dd\u00ee\3\2\2\2\u00de\u00df\t\3\2\2\u00df"+
-		"\u00ee\5 \21\t\u00e0\u00e1\7&\2\2\u00e1\u00e2\7\3\2\2\u00e2\u00ee\7&\2"+
-		"\2\u00e3\u00e4\7%\2\2\u00e4\u00e5\7\b\2\2\u00e5\u00ee\5 \21\4\u00e6\u00e7"+
-		"\7%\2\2\u00e7\u00e8\7\4\2\2\u00e8\u00e9\5 \21\2\u00e9\u00ea\7\5\2\2\u00ea"+
-		"\u00eb\7\b\2\2\u00eb\u00ec\5 \21\3\u00ec\u00ee\3\2\2\2\u00ed\u00c7\3\2"+
-		"\2\2\u00ed\u00c9\3\2\2\2\u00ed\u00cd\3\2\2\2\u00ed\u00d2\3\2\2\2\u00ed"+
-		"\u00d7\3\2\2\2\u00ed\u00de\3\2\2\2\u00ed\u00e0\3\2\2\2\u00ed\u00e3\3\2"+
-		"\2\2\u00ed\u00e6\3\2\2\2\u00ee\u00fa\3\2\2\2\u00ef\u00f0\f\b\2\2\u00f0"+
-		"\u00f1\t\4\2\2\u00f1\u00f9\5 \21\t\u00f2\u00f3\f\7\2\2\u00f3\u00f4\t\5"+
-		"\2\2\u00f4\u00f9\5 \21\b\u00f5\u00f6\f\6\2\2\u00f6\u00f7\t\6\2\2\u00f7"+
-		"\u00f9\5 \21\7\u00f8\u00ef\3\2\2\2\u00f8\u00f2\3\2\2\2\u00f8\u00f5\3\2"+
-		"\2\2\u00f9\u00fc\3\2\2\2\u00fa\u00f8\3\2\2\2\u00fa\u00fb\3\2\2\2\u00fb"+
-		"!\3\2\2\2\u00fc\u00fa\3\2\2\2\u00fd\u0102\5 \21\2\u00fe\u00ff\7\3\2\2"+
-		"\u00ff\u0101\5 \21\2\u0100\u00fe\3\2\2\2\u0101\u0104\3\2\2\2\u0102\u0100"+
-		"\3\2\2\2\u0102\u0103\3\2\2\2\u0103\u0107\3\2\2\2\u0104\u0102\3\2\2\2\u0105"+
-		"\u0107\3\2\2\2\u0106\u00fd\3\2\2\2\u0106\u0105\3\2\2\2\u0107#\3\2\2\2"+
-		"\26\'+;@V^aiq\u0091\u0097\u009d\u00ac\u00ba\u00c5\u00ed\u00f8\u00fa\u0102"+
-		"\u0106";
+		"\2\u00c7\u00c8\b\21\1\2\u00c8\u00c9\7%\2\2\u00c9\u00ca\7\6\2\2\u00ca\u00cb"+
+		"\5\"\22\2\u00cb\u00cc\7\7\2\2\u00cc\u00ee\3\2\2\2\u00cd\u00ee\t\2\2\2"+
+		"\u00ce\u00cf\7\6\2\2\u00cf\u00d0\5 \21\2\u00d0\u00d1\7\7\2\2\u00d1\u00ee"+
+		"\3\2\2\2\u00d2\u00d3\7%\2\2\u00d3\u00d4\7\4\2\2\u00d4\u00d5\5 \21\2\u00d5"+
+		"\u00d6\7\5\2\2\u00d6\u00ee\3\2\2\2\u00d7\u00d8\7\31\2\2\u00d8\u00d9\7"+
+		"\13\2\2\u00d9\u00da\7%\2\2\u00da\u00db\7\6\2\2\u00db\u00dc\5\"\22\2\u00dc"+
+		"\u00dd\7\7\2\2\u00dd\u00ee\3\2\2\2\u00de\u00df\t\3\2\2\u00df\u00ee\5 "+
+		"\21\t\u00e0\u00e1\7&\2\2\u00e1\u00e2\7\3\2\2\u00e2\u00ee\7&\2\2\u00e3"+
+		"\u00e4\7%\2\2\u00e4\u00e5\7\b\2\2\u00e5\u00ee\5 \21\4\u00e6\u00e7\7%\2"+
+		"\2\u00e7\u00e8\7\4\2\2\u00e8\u00e9\5 \21\2\u00e9\u00ea\7\5\2\2\u00ea\u00eb"+
+		"\7\b\2\2\u00eb\u00ec\5 \21\3\u00ec\u00ee\3\2\2\2\u00ed\u00c7\3\2\2\2\u00ed"+
+		"\u00cd\3\2\2\2\u00ed\u00ce\3\2\2\2\u00ed\u00d2\3\2\2\2\u00ed\u00d7\3\2"+
+		"\2\2\u00ed\u00de\3\2\2\2\u00ed\u00e0\3\2\2\2\u00ed\u00e3\3\2\2\2\u00ed"+
+		"\u00e6\3\2\2\2\u00ee\u00fa\3\2\2\2\u00ef\u00f0\f\b\2\2\u00f0\u00f1\t\4"+
+		"\2\2\u00f1\u00f9\5 \21\t\u00f2\u00f3\f\7\2\2\u00f3\u00f4\t\5\2\2\u00f4"+
+		"\u00f9\5 \21\b\u00f5\u00f6\f\6\2\2\u00f6\u00f7\t\6\2\2\u00f7\u00f9\5 "+
+		"\21\7\u00f8\u00ef\3\2\2\2\u00f8\u00f2\3\2\2\2\u00f8\u00f5\3\2\2\2\u00f9"+
+		"\u00fc\3\2\2\2\u00fa\u00f8\3\2\2\2\u00fa\u00fb\3\2\2\2\u00fb!\3\2\2\2"+
+		"\u00fc\u00fa\3\2\2\2\u00fd\u0102\5 \21\2\u00fe\u00ff\7\3\2\2\u00ff\u0101"+
+		"\5 \21\2\u0100\u00fe\3\2\2\2\u0101\u0104\3\2\2\2\u0102\u0100\3\2\2\2\u0102"+
+		"\u0103\3\2\2\2\u0103\u0107\3\2\2\2\u0104\u0102\3\2\2\2\u0105\u0107\3\2"+
+		"\2\2\u0106\u00fd\3\2\2\2\u0106\u0105\3\2\2\2\u0107#\3\2\2\2\26\'+;@V^"+
+		"aiq\u0091\u0097\u009d\u00ac\u00ba\u00c5\u00ed\u00f8\u00fa\u0102\u0106";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
