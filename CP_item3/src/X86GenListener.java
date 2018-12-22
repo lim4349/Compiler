@@ -36,7 +36,8 @@ public class X86GenListener extends MiniGoBaseListener{
 		if(ctx.getChild(2).getText().equals("int")) {
 			list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
 			local_var_table.put("main", list);
-			
+			System.out.println("\tmov dword [ebp-" + list.size() * 4 + 
+				"], 0x" + ctx.getChild(4).getText()); // 이게 sub전에 나와야하는데 이거 해결해야할듯
 		}
 		
 		
