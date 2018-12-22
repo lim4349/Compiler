@@ -25,7 +25,7 @@ public class X86GenListener extends MiniGoBaseListener{
 	
 	@Override
 	public void exitProgram(MiniGoParser.ProgramContext ctx) {
-		System.out.println("\tsub esp, 0x" + local_var_table.get("main").size() * 4);
+	//	System.out.println("\tsub esp, 0x" + local_var_table.get("main").size() * 4);
 		System.out.println(); // 구분하기위해 넣어둠, 최종에는 제거
 		System.out.println("\tmov esp, ebp");
 		System.out.println("\tpop ebp");
@@ -123,15 +123,49 @@ public class X86GenListener extends MiniGoBaseListener{
 	@Override 
 	public void enterLocal_decl(MiniGoParser.Local_declContext ctx) { // var x int
 		if(ctx.getChild(2).getText().equals("int")) {
-			list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
-			local_var_table.put("main", list);
+		//	list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
+		//	local_var_table.put("main", list);
 		}
 		
 	}
 	
+	
+	// 블록 지역변수 선언문(반복문, 조건문, 함수 블록 등)
 	@Override
 	public void exitLocal_decl(MiniGoParser.Local_declContext ctx) {
 		String local_decl;
+		String function_name;
+		
+		// 함수의 지역변수 정의로 쓰일 경우
+		if( (function_name = get_function_name(ctx)) != null) {
+			ArrayList<Variable> local_var_list;
+			
+			// 이 지역 변수 정의문을 포함하는 함수의 지역변수 리스트를 지역 변수 테이블로부터  받아오기
+			if(var_table.get(function_name) == null) {	// 지역 변수테이블에 함수에 대한 변수 리스트가 추가 되어있지 않은 경우
+				local_var_list= new ArrayList<>();
+				var_table.put(function_name, local_var_list);
+			}else {
+				local_var_list = (ArrayList<Variable>) var_table.get(function_name);
+			}
+		
+			String var_name = ctx.IDENT().toString();	// 변수명
+			int var_value;								// 변수값
+			int var_offset = 0;							// 변수의 offset, 값 할당시 결정되므로 일단 0으로
+			
+			if(ctx.getChildCount() == 3) {	// 일반 변수 : local_decl 제 1규칙
+				var_value = 4;	// 변수값은 할당 안되므로, 4로 초기화(int 타입 이라는 정보)
+			}else {							// 배열 변수 : local_decl 제 2규칙
+				var_value = Integer.parseInt(ctx.LITERAL().toString()) * 4;	// 변수값은 할당 안되므로, [배열 크기  * 4]로 초기화 (배열 int 타입 이라는 정보)
+			}
+			
+			local_var_list.add(new Variable(var_name, var_value, var_offset));
+			
+			local_decl = "";		// local_decl에 대한 x86코드 필요없음
+			newTexts.put(ctx, local_decl);
+		}
+		
+	
+		
 		
 	}
 	
@@ -150,10 +184,10 @@ public class X86GenListener extends MiniGoBaseListener{
 	@Override
 	public void enterAssign_stmt(MiniGoParser.Assign_stmtContext ctx) { // var z int = 0
 		if(ctx.getChild(2).getText().equals("int")) {
-			list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
-			local_var_table.put("main", list);
-			System.out.println("\tmov dword [ebp-" + list.size() * 4 + 
-				"], 0x" + ctx.getChild(4).getText()); // 이게 sub전에 나와야하는데 이거 해결해야할듯
+		//	list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
+		//	local_var_table.put("main", list);
+		//	System.out.println("\tmov dword [ebp-" + list.size() * 4 + 
+		//		"], 0x" + ctx.getChild(4).getText()); // 이게 sub전에 나와야하는데 이거 해결해야할듯
 		}
 		
 		
