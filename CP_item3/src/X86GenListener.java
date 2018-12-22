@@ -112,7 +112,7 @@ public class X86GenListener extends MiniGoBaseListener {
 
 		ArrayList<String> jump_list = new ArrayList<String>();
 		for (int i = 0; i < 2; i++) {
-			jump_list.add(".L" + ++jump);
+			jump_list.add("L" + ++jump);
 		}
 		String var_name = ctx.expr().getChild(0).getText();
 		// System.out.println(var_table.get(var_name).get(0).offset);
@@ -125,27 +125,31 @@ public class X86GenListener extends MiniGoBaseListener {
 		String expr = ctx.expr().getChild(1).getText();
 		switch (expr) {
 		case ">":
-			System.out.print("\tgt ");
+			System.out.print("\tjl ");
 			break;
 		case "<":
-			System.out.print("\tlt ");
+			System.out.print("\tjg ");
 			break;
 		case ">=":
-			System.out.print("\tge ");
+			System.out.print("\tjle ");
 			break;
 		case "<=":
-			System.out.print("\tle ");
+			System.out.print("\tjge ");
 			break;
 		case "==":
-			System.out.print("\teq ");
+			System.out.print("\tjne ");
 			break;
 		case "!=":
-			System.out.print("\tne ");
+			System.out.print("\tje ");
 			break;
 		default:
 			break;
 		}
 		System.out.println(jump_list.get(1));
+		
+		//for문 안에 내용구현
+		System.out.println();
+		System.out.println("\tjmp" + jump_list.get(0));
 		System.out.println(jump_list.get(1) + ":");
 	}
 
