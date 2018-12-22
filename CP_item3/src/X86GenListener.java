@@ -20,9 +20,7 @@ public class X86GenListener extends MiniGoBaseListener{
 	
 	@Override
 	public void exitProgram(MiniGoParser.ProgramContext ctx) {
-		int size = local_var_table.get("main").get(0).size; //x의 size
-		//다른 변수 안쓰고 int로 고정이면 그냥 4로해도됨
-		System.out.println("\tsub esp, 0x" + local_var_table.get("main").size() * size);
+		System.out.println("\tsub esp, 0x" + local_var_table.get("main").size() * 4);
 		System.out.println(); // 구분하기위해 넣어둠, 최종에는 제거
 		System.out.println("\tmov esp, ebp");
 		System.out.println("\tpop ebp");
@@ -36,8 +34,9 @@ public class X86GenListener extends MiniGoBaseListener{
 	@Override
 	public void enterAssign_stmt(MiniGoParser.Assign_stmtContext ctx) { // var z int = 0
 		if(ctx.getChild(2).getText().equals("int")) {
-			list.add(new Variable(ctx.getChild(1).getText(), 4));
+			list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
 			local_var_table.put("main", list);
+			
 		}
 		
 		
@@ -45,7 +44,7 @@ public class X86GenListener extends MiniGoBaseListener{
 	@Override 
 	public void enterLocal_decl(MiniGoParser.Local_declContext ctx) { // var x int
 		if(ctx.getChild(2).getText().equals("int")) {
-			list.add(new Variable(ctx.getChild(1).getText(), 4));
+			list.add(new Variable(ctx.getChild(1).getText(), (list.size() + 1) * 4));
 			local_var_table.put("main", list);
 		}
 		
