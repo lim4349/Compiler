@@ -32,7 +32,7 @@ public class X86GenListener extends MiniGoBaseListener {
 			program += "global main\n\n";
 			program += "section .data\n";		// data 영역 사용에 대한 구현 필요
 			// data 영역 사용에 대한 구현 필요
-			program += "section.text";
+			program += "section.text\n";
 			program += decl;
 		
 			newTexts.put(ctx, program);
@@ -106,12 +106,12 @@ public class X86GenListener extends MiniGoBaseListener {
 				
 				// 함수 에필로그 
 				func_decl += "\tmov esp, ebp\n";
-				func_decl += "\tpop ebp";
+				func_decl += "\tpop ebp\n";
 			
 				if(function_name.equals("main")) {	 // 정상 종료를 위해 exit(0) 추가
-					func_decl += "\tmov eax, 1";	// 시스템콜 번호
-					func_decl += "\tmvo ebx, 0";	// 인자가 0 : 정상 종료를 의미
-					func_decl += "\tint 80h";		// 시스템 콜
+					func_decl += "\tmov eax, 1\n";	// 시스템콜 번호
+					func_decl += "\tmvo ebx, 0\n";	// 인자가 0 : 정상 종료를 의미
+					func_decl += "\tint 80h\n";		// 시스템 콜
 				}
 				newTexts.put(ctx, func_decl);
 			}
@@ -164,11 +164,10 @@ public class X86GenListener extends MiniGoBaseListener {
 	// 변수 값 할당
 	@Override
 	public void exitAssign_stmt(MiniGoParser.Assign_stmtContext ctx) {
-		if(var_table_constructed) {
-			String assign_stmt = "";
 		
 			// 함수의 지역변수 할당문으로 쓰일 경우
 			if(ctx.getParent().getParent().getParent().getRuleIndex() == 4) {
+				if(!var_table_constructed) {
 				String function_name = get_function_name(ctx);
 				ArrayList<Variable> local_var_list;
 			
@@ -184,8 +183,7 @@ public class X86GenListener extends MiniGoBaseListener {
 					}
 				
 					String var_name = ctx.IDENT().toString();	// 변수명
-					//int var_value = Integer.parseInt(newTexts.get(ctx.expr(0)));	// 변수값								// 변수값
-					int var_value = 10;
+					int var_value = Integer.parseInt(newTexts.get(ctx.expr(0)));	// 변수값								// 변수값
 					int var_offset;								// 변수 offset
 				
 					if(local_var_list.isEmpty()) {
@@ -197,50 +195,35 @@ public class X86GenListener extends MiniGoBaseListener {
 				
 					local_var_list.add(new Variable(var_name, var_value, var_offset));
 				
-					assign_stmt += var_name;			// 일단 변수명으로 추가
-					newTexts.put(ctx, assign_stmt);		// compound_stmt에서  mov dword [ebp-8], 0x0 과 같은 코드로 처리함
 				}
 
-			}
+			}else {
+				String function_name = get_function_name(ctx);
+				String var_name = ctx.IDENT().toString();
+				Variable variable = find_variable(function_name, var_name);
+				
+				String assign_stmt = "\tmov dword [ebp-0x" + Integer.toHexString(variable.offset)
+				  					+ "], 0x" + Integer.toHexString(variable.value) + "\n";
+				newTexts.put(ctx, assign_stmt);
+				}
+				
 		}
 		
 	}
 	
-	// 변수값 할당 최종 처리
-	// stmt* 에 대한 부분이다. local_decl* 에 대한 처리는 특별히 구현할 것 없음
+
 	@Override
 	public void exitCompound_stmt(MiniGoParser.Compound_stmtContext ctx) {
 		if(var_table_constructed) {
 			String compound_stmt = "";
-		
-			// fun_decl의 compound_stmt인 경우
-			if(ctx.getParent().getRuleIndex() == 4) {
-				ParserRuleContext assign_stmtContext;
-				String function_name = get_function_name(ctx);
-				int space_of_local_variables = get_space_of_local_variables(function_name);
 			
-				compound_stmt += "\tsub esp, 0x" + Integer.toHexString(space_of_local_variables) + "\n";
-			
-				for(int i = 0; i < ctx.getChildCount(); i++) {	
-					assign_stmtContext = ctx.stmt(i).assign_stmt(); 
-					if(assign_stmtContext != null && assign_stmtContext.getRuleIndex() == 9) { // assign_stmt인 경우	
-						String var_name = newTexts.get(assign_stmtContext);
-						Variable variable = find_variable(function_name, var_name);
-						variable.offset = find_final_offset(space_of_local_variables, variable.offset); // 여기서 비로소 최종 offset이 결정됨
-																										// offset이 4일 경우 [ebp-0x4]임을, offset이 8일 경우 [ebp-0x8]임을 의미
-						String assign_text = "\tmov dword [ebp-0x" + Integer.toHexString(variable.offset)
-											+ "], 0x" + Integer.toHexString(variable.value) + "\n";
-						//newTexts.get(assign_stmtContext).replaceAll(var_name, assign_text);
-						newTexts.put(assign_stmtContext, assign_text);
-						newTexts.put(ctx.stmt(i), newTexts.get(assign_stmtContext));
-						
-						compound_stmt += assign_text;
-					}
+			for(int i = 0; i < ctx.getChildCount(); i++) {
+				String temp = newTexts.get(ctx.getChild(i));
+				if(temp != null) {
+					compound_stmt += temp;
 				}
-				newTexts.put(ctx, compound_stmt);
 			}
 		}
-		
 	}
 
 
@@ -306,7 +289,7 @@ public class X86GenListener extends MiniGoBaseListener {
 	// 블록 지역변수 선언문(반복문, 조건문, 함수 블록 등)
 	@Override
 	public void exitLocal_decl(MiniGoParser.Local_declContext ctx) {
-		if(var_table_constructed) {
+		if(!var_table_constructed) {
 			String local_decl;
 			String function_name;
 			// 함수의 지역변수 정의로 쓰일 경우
@@ -334,20 +317,63 @@ public class X86GenListener extends MiniGoBaseListener {
 	
 				local_var_list.add(new Variable(var_name, var_value, var_offset));
 	
-				local_decl = ""; // local_decl에 대한 x86코드 필요없음
-				newTexts.put(ctx, local_decl);
 			}
 		}
 	}
 
 	@Override
 	public void exitExpr(MiniGoParser.ExprContext ctx) {
-		if(var_table_constructed) {
-			String function_name = get_function_name(ctx);
-			
-			// expr 제 1규칙
-			
+		String function_name = get_function_name(ctx);
+		
+		// expr 제 2규칙
+		if(ctx.getChildCount() == 1) {	// 수(LITERAL) 또는 문자(IDENT)
+			if(function_name != null) {	// 함수에 속하는 변수인 경우 (전역이 아닌)
+				String expr = null;
+				
+				if(!ctx.LITERAL().isEmpty()) {	// 수(LITERAL)
+					expr = ctx.getChild(0).toString();
+				}
+				
+				if(ctx.IDENT() != null) {		// 문자 (IDENT)
+					Variable variable = find_variable(function_name, ctx.IDENT().toString());
+					if(variable != null) {
+						expr = Integer.toString(variable.value);
+					}
+				}
+				
+				newTexts.put(ctx, expr);
+			}
 		}
+		
+		if(ctx.getChildCount() == 3) {
+			// 함수에 속하는 변수일 경우. (전역이 아닌)
+			if(function_name != null) {
+				String op = ctx.getChild(1).toString();
+				
+				// expr 제 7규칙
+				if(op.equals("*") || op.equals("/") || op.equals("%")) {
+					
+				}
+				
+				// expr 제  8 규칙
+				if(op.equals("+") || op.equals("-")) {
+					
+				}
+				
+				// expr 제 9 규칙
+				if(op.equals("==") || op.equals("!=") || op.equals("<=") ||  op.equals("<") || 
+						op.equals(">=") || op.equals(">") || op.equals("and") || op.equals("or")) {
+					
+				}
+				
+				 // expr 제 11규칙
+				if(op.equals("=")) {
+					
+				}
+				
+			}
+		}
+		
 	}
 
 	@Override
