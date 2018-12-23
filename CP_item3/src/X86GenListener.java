@@ -2,6 +2,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.*;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -14,6 +15,8 @@ public class X86GenListener extends MiniGoBaseListener {
 	// 변수 테이블, Key -> 함수명, Value -> 그 함수에 속하는 지역 변수 리스트
 	static HashMap<String, List<Variable>> var_table = new HashMap<>();
 	static boolean var_table_constructed = false;			// 변수 테이블의 완성여부. 두 번째 walk일 경우 true가 되어야함 
+	ArrayList<String> external_func_list = new ArrayList<>();		// printf와 같은 외부 함수 리스트
+	ArrayList<String> data_area = new ArrayList<>();				// 메모리의 data 영역에 속하는 항목들 (printf 에서 사용됨)
 	int jump = 0;
 	
 	@Override
@@ -28,10 +31,19 @@ public class X86GenListener extends MiniGoBaseListener {
 				decl += (newTexts.get(ctx.getChild(i)));
 			}
 		
-			program += "extern printf\n";		// 외부함수 사용 선언 기능 구현 필요
+			// 외부함수 사용 선언
+			for(String extern_func : external_func_list) {
+				program += "extern " + extern_func + "\n";
+			}
+			
 			program += "global main\n\n";
-			program += "section .data\n";		// data 영역 사용에 대한 구현 필요
-			// data 영역 사용에 대한 구현 필요
+			program += "section .data\n";		
+			
+			// data 영역
+			for(String data : data_area) {
+				program += data + "\n";
+			}
+			
 			program += "section .text\n";
 			program += decl;
 		
@@ -264,13 +276,15 @@ public class X86GenListener extends MiniGoBaseListener {
 			int var_offset = find_variable("main", var_name).offset;
 
 			String input = "";
-			String jmp = jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" + jump_list.get(1) + ":";
+			String jmp = jump_list.get(1) + "\n" +  newTexts.get(ctx.getChild(2)) +"\tjmp " 
+					+ jump_list.get(0) + "\n" + jump_list.get(1) + ":";
 			input += jump_list.get(0) + ":\n" + "\tcmp dword [ebp-0x" + var_offset + "], 0x"
 					+ ctx.expr().getChild(2).getText() + "\n";
 			
-
+			
 			String expr = ctx.expr().getChild(1).getText();
-
+			
+		
 			if (expr.equals(">")) {
 				input += "\tjle " + jmp;
 			} else if (expr.equals("<")) {
@@ -283,9 +297,12 @@ public class X86GenListener extends MiniGoBaseListener {
 				input += "\tjne " + jmp;
 			} else if (expr.equals("!=")) {
 				input += "\tje " + jmp;
+
 			}
 			
 			input += "\n";
+			
+
 			
 			newTexts.put(ctx, input);
 		}
@@ -336,6 +353,28 @@ public class X86GenListener extends MiniGoBaseListener {
 	public void exitExpr(MiniGoParser.ExprContext ctx) {
 		String function_name = get_function_name(ctx);
 		
+		// expr 제 1규칙 (함수 호출)
+		if(ctx.getChildCount() == 4) {
+			if(var_table_constructed) {
+				String expr = "";
+				if(ctx.IDENT().toString().equals("write")) {
+					String data_area_message = "\tmessage" + (data_area.size()+1) + " db \"%d\", 10, 0";
+					external_func_list.add("printf");
+					data_area.add(data_area_message);
+					
+					expr += "\tmov eax, " + newTexts.get(ctx.getChild(2)) + "\n";	// 출력할 인자
+					expr += "\tpush eax\n";
+					expr += "\tpush dword " + data_area_message.split(" ")[0].substring(1) + "\n";
+					expr += "\tcall printf\n";
+				}
+			
+				
+				newTexts.put(ctx, expr);
+			}
+		
+		}
+		
+		
 		// expr 제 2규칙
 		if(ctx.getChildCount() == 1) {	// 수(LITERAL) 또는 문자(IDENT)
 			if(function_name != null) {	// 함수에 속하는 변수인 경우 (전역이 아닌)
@@ -367,13 +406,14 @@ public class X86GenListener extends MiniGoBaseListener {
 				if(op.equals("*") || op.equals("/") || op.equals("%")) {
 					if(var_table_constructed) {
 						String expr = "";
-						String operator = newTexts.get(ctx.getChild(0));
-						String operand = newTexts.get(ctx.getChild(2));
-						System.out.println(operator);
-						System.out.println(operand);
+						String dividend = newTexts.get(ctx.getChild(0));
+						String divisor = newTexts.get(ctx.getChild(2));
+					
 						
 						if(op.equals("/")) {
-							
+							expr += "\tmov eax, " + dividend + "\n";
+							expr += "\tsar eax, " + (int)(Math.log10((double)Integer.parseInt(divisor)) / Math.log10(2.0)) + "\n";
+							newTexts.put(ctx, expr);
 						}
 						
 					}
@@ -381,26 +421,50 @@ public class X86GenListener extends MiniGoBaseListener {
 				
 				// expr 제  8 규칙
 				if(op.equals("+") || op.equals("-")) {
-					
+					if(var_table_constructed) {
+						String  expr ="";
+						String operand1 = newTexts.get(ctx.getChild(0));
+						String operand2 = newTexts.get(ctx.getChild(2));
+						
+						expr += "\tmov eax, " + operand1 + "\n";
+						expr += "\tmov ebx, " + operand2 + "\n";
+						expr += "\tadd eax, ebx\n";
+						
+						newTexts.put(ctx, expr);
+					}
 				}
 				
 				// expr 제 9 규칙
 				if(op.equals("==") || op.equals("!=") || op.equals("<=") ||  op.equals("<") || 
 						op.equals(">=") || op.equals(">") || op.equals("and") || op.equals("or")) {
+					String expr = "";
 					
+					if(op.equals(">")) {
+						
+					}
 				}
 				
 				 // expr 제 11규칙
 				if(op.equals("=")) {			// x = 410과 같은 할당문 처리
 					if(var_table_constructed) {
+						String expr = "";
 						Variable variable = find_variable(function_name, ctx.getChild(0).toString());
 						
-						if(newTexts.get(ctx.getChild(2)) != null) {		// 잠깐 임시로
-							variable.value = Integer.parseInt(newTexts.get(ctx.getChild(2)).toString());
+						if(newTexts.get(ctx.getChild(2)) != null ) {
+							try {		// x = 410과 같은 단순 정수 할당
+								variable.value = Integer.parseInt(newTexts.get(ctx.getChild(2)).toString());
+								expr += "\tmov dword [ebp-0x" + Integer.toHexString(variable.offset)
+										+ "], 0x" + Integer.toHexString(variable.value) + "\n";
+							}catch (NumberFormatException e) {
+								expr += newTexts.get(ctx.getChild(2));
+								expr += "\tmov dword [ebp-0x" + Integer.toHexString(variable.offset) + "], eax\n";
+								
+							}
 						}
+					
+		
 
-						String expr ="\tmov dword [ebp-0x" + variable.offset
-								+ "], 0x" + Integer.toHexString(variable.value) + "\n";
+						
 						newTexts.put(ctx, expr);
 						
 					}else {
@@ -422,7 +486,9 @@ public class X86GenListener extends MiniGoBaseListener {
 
 	@Override
 	public void exitArgs(MiniGoParser.ArgsContext ctx) {
-
+		if(var_table_constructed) {
+			newTexts.put(ctx, newTexts.get(ctx.getChild(0)));	// 단일 인자만 생각
+		}
 	}
 
 
