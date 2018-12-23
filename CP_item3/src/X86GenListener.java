@@ -353,12 +353,14 @@ public class X86GenListener extends MiniGoBaseListener {
 					expr = ctx.getChild(0).toString();
 				}
 				
+				
 				if(ctx.IDENT() != null) {		// 문자 (IDENT)
 					Variable variable = find_variable(function_name, ctx.IDENT().toString());
 					if(variable != null) {
-						expr = Integer.toString(variable.value);	// eax같은식 줘야할듯?
+						expr = "dword [ebp-0x" + variable.offset + "]";
 					}
 				}
+				
 				
 				newTexts.put(ctx, expr);
 			}
@@ -371,7 +373,18 @@ public class X86GenListener extends MiniGoBaseListener {
 				
 				// expr 제 7규칙
 				if(op.equals("*") || op.equals("/") || op.equals("%")) {
-					
+					if(var_table_constructed) {
+						String expr = "";
+						String operator = newTexts.get(ctx.getChild(0));
+						String operand = newTexts.get(ctx.getChild(2));
+						System.out.println(operator);
+						System.out.println(operand);
+						
+						if(op.equals("/")) {
+							
+						}
+						
+					}
 				}
 				
 				// expr 제  8 규칙
