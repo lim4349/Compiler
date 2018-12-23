@@ -32,7 +32,7 @@ public class X86GenListener extends MiniGoBaseListener {
 			program += "global main\n\n";
 			program += "section .data\n";		// data 영역 사용에 대한 구현 필요
 			// data 영역 사용에 대한 구현 필요
-			program += "section.text\n";
+			program += "section .text\n";
 			program += decl;
 		
 			newTexts.put(ctx, program);
@@ -111,7 +111,7 @@ public class X86GenListener extends MiniGoBaseListener {
 			
 				if(function_name.equals("main")) {	 // 정상 종료를 위해 exit(0) 추가
 					func_decl += "\tmov eax, 1\n";	// 시스템콜 번호
-					func_decl += "\tmvo ebx, 0\n";	// 인자가 0 : 정상 종료를 의미
+					func_decl += "\tmov ebx, 0\n";	// 인자가 0 : 정상 종료를 의미
 					func_decl += "\tint 80h\n";		// 시스템 콜
 				}
 				newTexts.put(ctx, func_decl);
@@ -256,43 +256,43 @@ public class X86GenListener extends MiniGoBaseListener {
 			for (int i = 0; i < 2; i++) {
 				jump_list.add("L" + ++jump);
 			}
-			String var_name = ctx.expr().getChild(0).getText();
-			// System.out.println(var_table.get(var_name).get(0).offset);
-			// int var_value = var_table.get(ctx.expr().getChild(1)); // 변수값
-			int var_offset = 0; // 변수의 offset, 값 할당시 결정되므로 일단 0으로
-	
-			System.out.println(jump_list.get(0) + ":");
-			System.out.println("\tcmp dword [ebp-" + "], 0x" + "");
-	
-			String expr = ctx.expr().getChild(1).getText();
-			switch (expr) {
-			case ">":
-				System.out.print("\tjl ");
-				break;
-			case "<":
-				System.out.print("\tjg ");
-				break;
-			case ">=":
-				System.out.print("\tjle ");
-				break;
-			case "<=":
-				System.out.print("\tjge ");
-				break;
-			case "==":
-				System.out.print("\tjne ");
-				break;
-			case "!=":
-				System.out.print("\tje ");
-				break;
-			default:
-				break;
-			}
-			System.out.println(jump_list.get(1));
+			String var_name = find_variable("main", ctx.expr().getChild(0).getText()).name;
+			int var_value = find_variable("main", var_name).value;
+			int var_offset = find_variable("main", var_name).offset;
 			
-			//for문 안에 내용구현
-			System.out.println();
-			System.out.println("\tjmp" + jump_list.get(0));
-			System.out.println(jump_list.get(1) + ":");
+			String input = "";
+			
+			input += jump_list.get(0) + ":\n" + "\tcmp dword [ebp-0x" + var_offset +
+					"], 0x" + ctx.expr().getChild(2).getText() + "\n";
+
+			String expr = ctx.expr().getChild(1).getText();
+			
+			if(expr.equals(">")) {
+				input += "\tjl "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			else if(expr.equals("<")) {
+				input += "\tjg "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			else if(expr.equals(">=")) {
+				input += "\tjle "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			else if(expr.equals("<=")) {
+				input += "\tjge "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			else if(expr.equals("==")) {
+				input += "\tjne "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			else if(expr.equals("!=")) {
+				input += "\tje "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
+				+ jump_list.get(1) + ":";
+			}
+			input += "\n";
+			newTexts.put(ctx, input);
 		}
 	}
 
