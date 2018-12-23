@@ -94,7 +94,7 @@ public class X86GenListener extends MiniGoBaseListener {
 				if(var_table_constructed) {
 					String func_decl = "";
 				String function_name = get_function_name(ctx);
-				int local_var_count = ((ArrayList<Variable>)var_table.get(function_name)).size();
+				int space_of_local_variables = ((ArrayList<Variable>)var_table.get(function_name)).size() * 4;
 			
 				func_decl += (function_name + ":\n");
 			
@@ -102,6 +102,9 @@ public class X86GenListener extends MiniGoBaseListener {
 				func_decl += "\tpush ebp\n";
 				func_decl += "\tmov ebp, esp\n";
 			
+				// 지역변수 공간 할당
+				func_decl += "\tsub esp, 0x" + Integer.toHexString(space_of_local_variables) + "\n";
+				
 				// 함수 내용
 				func_decl += newTexts.get(ctx.compound_stmt());
 				
