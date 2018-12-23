@@ -6,6 +6,7 @@ section.text
 main:
 	push ebp
 	mov ebp, esp
+	sub esp, 0x8
 	mov dword [ebp-0x8], 0x0
 	mov dword [ebp-0x4], 0x19a
 	mov esp, ebp
