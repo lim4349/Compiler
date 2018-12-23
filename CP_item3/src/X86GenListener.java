@@ -88,10 +88,11 @@ public class X86GenListener extends MiniGoBaseListener {
 	// 함수 부분
 	@Override
 	public void exitFun_decl(MiniGoParser.Fun_declContext ctx) {
-		if(var_table_constructed) {
-			String func_decl = "";
+	
 		
 			if(ctx.getChildCount() == 7 ) {		// fun_decl의 규칙 1
+				if(var_table_constructed) {
+					String func_decl = "";
 				String function_name = get_function_name(ctx);
 				int local_var_count = ((ArrayList<Variable>)var_table.get(function_name)).size();
 			
@@ -114,7 +115,20 @@ public class X86GenListener extends MiniGoBaseListener {
 					func_decl += "\tint 80h\n";		// 시스템 콜
 				}
 				newTexts.put(ctx, func_decl);
+			}else {
+				String function_name = get_function_name(ctx);
+				ArrayList<Variable> local_var_list = (ArrayList<Variable>) var_table.get(function_name);
+				int space_of_local_variables = local_var_list.size() * 4;
+				
+				for(Variable variable : local_var_list) {
+					variable.offset =  find_final_offset(space_of_local_variables, variable.offset);
+				}
+				
+				for(Variable variable : local_var_list) {
+					//System.out.println(variable);
+				}
 			}
+				
 		}
 	}
 	
@@ -182,7 +196,7 @@ public class X86GenListener extends MiniGoBaseListener {
 						local_var_list = (ArrayList<Variable>)var_table.get(function_name);
 					}
 				
-					String var_name = ctx.IDENT().toString();	// 변수명
+					String var_name = ctx.getChild(1).toString();	// 변수명
 					int var_value = Integer.parseInt(newTexts.get(ctx.expr(0)));	// 변수값								// 변수값
 					int var_offset;								// 변수 offset
 				
@@ -199,8 +213,10 @@ public class X86GenListener extends MiniGoBaseListener {
 
 			}else {
 				String function_name = get_function_name(ctx);
-				String var_name = ctx.IDENT().toString();
+				String var_name = ctx.getChild(1).toString();
 				Variable variable = find_variable(function_name, var_name);
+				int var_value = Integer.parseInt(newTexts.get(ctx.expr(0)));	// 변수값								// 변
+				variable.value = var_value;
 				
 				String assign_stmt = "\tmov dword [ebp-0x" + Integer.toHexString(variable.offset)
 				  					+ "], 0x" + Integer.toHexString(variable.value) + "\n";
@@ -223,6 +239,7 @@ public class X86GenListener extends MiniGoBaseListener {
 					compound_stmt += temp;
 				}
 			}
+			newTexts.put(ctx, compound_stmt);
 		}
 	}
 
@@ -289,35 +306,34 @@ public class X86GenListener extends MiniGoBaseListener {
 	// 블록 지역변수 선언문(반복문, 조건문, 함수 블록 등)
 	@Override
 	public void exitLocal_decl(MiniGoParser.Local_declContext ctx) {
-		if(!var_table_constructed) {
-			String local_decl;
+		
 			String function_name;
 			// 함수의 지역변수 정의로 쓰일 경우
 			if ((function_name = get_function_name(ctx)) != null) {
-				ArrayList<Variable> local_var_list;
-	
-				// 이 지역 변수 정의문을 포함하는 함수의 지역변수 리스트를 지역 변수 테이블로부터 받아오기
-				if (var_table.get(function_name) == null) { // 지역 변수테이블에 함수에 대한 변수 리스트가 추가 되어있지 않은 경우
-					local_var_list = new ArrayList<>();
-					var_table.put(function_name, local_var_list);
-				} else {
-					local_var_list = (ArrayList<Variable>) var_table.get(function_name);
+				if(!var_table_constructed) {
+					ArrayList<Variable> local_var_list;
+		
+					// 이 지역 변수 정의문을 포함하는 함수의 지역변수 리스트를 지역 변수 테이블로부터 받아오기
+					if (var_table.get(function_name) == null) { // 지역 변수테이블에 함수에 대한 변수 리스트가 추가 되어있지 않은 경우
+						local_var_list = new ArrayList<>();
+						var_table.put(function_name, local_var_list);
+					} else {
+						local_var_list = (ArrayList<Variable>) var_table.get(function_name);
+					}
+		
+					String var_name = ctx.IDENT().toString(); // 변수명
+					int var_value; // 변수값
+					int var_offset = 0; // 변수의 offset, 값 할당시 결정되므로 일단 0으로
+		
+					if (ctx.getChildCount() == 3) { // 일반 변수 : local_decl 제 1규칙
+						var_value = 4; // 변수값은 할당 안되므로, 4로 초기화(int 타입 이라는 정보)
+					} else { // 배열 변수 : local_decl 제 2규칙
+						var_value = Integer.parseInt(ctx.LITERAL().toString()) * 4; // 변수값은 할당 안되므로, [배열 크기 * 4]로 초기화 (배열 int 타입
+																					// 이라는 정보)
+					}
+		
+					local_var_list.add(new Variable(var_name, var_value, var_offset));
 				}
-	
-				String var_name = ctx.IDENT().toString(); // 변수명
-				int var_value; // 변수값
-				int var_offset = 0; // 변수의 offset, 값 할당시 결정되므로 일단 0으로
-	
-				if (ctx.getChildCount() == 3) { // 일반 변수 : local_decl 제 1규칙
-					var_value = 4; // 변수값은 할당 안되므로, 4로 초기화(int 타입 이라는 정보)
-				} else { // 배열 변수 : local_decl 제 2규칙
-					var_value = Integer.parseInt(ctx.LITERAL().toString()) * 4; // 변수값은 할당 안되므로, [배열 크기 * 4]로 초기화 (배열 int 타입
-																				// 이라는 정보)
-				}
-	
-				local_var_list.add(new Variable(var_name, var_value, var_offset));
-	
-			}
 		}
 	}
 
@@ -337,7 +353,7 @@ public class X86GenListener extends MiniGoBaseListener {
 				if(ctx.IDENT() != null) {		// 문자 (IDENT)
 					Variable variable = find_variable(function_name, ctx.IDENT().toString());
 					if(variable != null) {
-						expr = Integer.toString(variable.value);
+						expr = Integer.toString(variable.value);	// eax같은식 줘야할듯?
 					}
 				}
 				
@@ -367,7 +383,27 @@ public class X86GenListener extends MiniGoBaseListener {
 				}
 				
 				 // expr 제 11규칙
-				if(op.equals("=")) {
+				if(op.equals("=")) {			// x = 410과 같은 할당문 처리
+					if(var_table_constructed) {
+						Variable variable = find_variable(function_name, ctx.getChild(0).toString());
+						
+						if(newTexts.get(ctx.getChild(2)) != null) {		// 잠깐 임시로
+							variable.value = Integer.parseInt(newTexts.get(ctx.getChild(2)).toString());
+						}
+
+						String expr ="\tmov dword [ebp-0x" + variable.offset
+								+ "], 0x" + Integer.toHexString(variable.value) + "\n";
+						newTexts.put(ctx, expr);
+						
+					}else {
+						Variable variable = find_variable(function_name, ctx.getChild(0).toString());	// 현재 할당되는 변수
+						if(variable.offset == 0) {		// 처음 할당되는 변수인 경우
+							ArrayList<Variable> local_var_list = (ArrayList<Variable>) var_table.get(function_name);
+							Variable recently_added_var = get_recently_added_variable(local_var_list);	// 제일 최근에 할당된 변수
+							variable.offset = recently_added_var.offset + 1;
+				
+						}
+					}
 					
 				}
 				
@@ -383,14 +419,7 @@ public class X86GenListener extends MiniGoBaseListener {
 
 
 	
-	// 인자로 받은 함수의 지역변수 공간 크기를 리턴하는 함수
-	private int get_space_of_local_variables(String function_name) {
-		return var_table.get(function_name).size() * 4;
-	}
 	
-
-
-
 	// 매개 변수로 넘어온 context가 fun_decl의 자식일 경우, function 이름 반환
 	private String get_function_name(ParserRuleContext ctx) {
 		while (ctx.getRuleIndex() != 4) {
