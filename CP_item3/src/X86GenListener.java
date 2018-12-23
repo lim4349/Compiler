@@ -266,48 +266,43 @@ public class X86GenListener extends MiniGoBaseListener {
 
 	@Override
 	public void exitFor_stmt(MiniGoParser.For_stmtContext ctx) {
-		if(var_table_constructed) {
+		if (var_table_constructed) {
 			ArrayList<String> jump_list = new ArrayList<String>();
 			for (int i = 0; i < 2; i++) {
 				jump_list.add("L" + ++jump);
 			}
 			String var_name = find_variable("main", ctx.expr().getChild(0).getText()).name;
-			int var_value = find_variable("main", var_name).value;
+			//int var_value = find_variable("main", var_name).value;
 			int var_offset = find_variable("main", var_name).offset;
-			
+
 			String input = "";
+			String jmp = jump_list.get(1) + "\n" +  newTexts.get(ctx.getChild(2)) +"\tjmp " 
+					+ jump_list.get(0) + "\n" + jump_list.get(1) + ":";
+			input += jump_list.get(0) + ":\n" + "\tcmp dword [ebp-0x" + var_offset + "], 0x"
+					+ ctx.expr().getChild(2).getText() + "\n";
 			
-			input += jump_list.get(0) + ":\n" + "\tcmp dword [ebp-0x" + var_offset +
-					"], 0x" + ctx.expr().getChild(2).getText() + "\n";
 			
 			String expr = ctx.expr().getChild(1).getText();
 			
-			if(expr.equals(">")) {
-				input += "\tjle "+ jump_list.get(1) + "\n" + newTexts.get(ctx.getChild(2)) + "\tjmp " + 
-						jump_list.get(0) + "\n" + jump_list.get(1) + ":";
+		
+			if (expr.equals(">")) {
+				input += "\tjle " + jmp;
+			} else if (expr.equals("<")) {
+				input += "\tjge " + jmp;
+			} else if (expr.equals(">=")) {
+				input += "\tjl " + jmp;
+			} else if (expr.equals("<=")) {
+				input += "\tjg " + jmp;
+			} else if (expr.equals("==")) {
+				input += "\tjne " + jmp;
+			} else if (expr.equals("!=")) {
+				input += "\tje " + jmp;
+
 			}
-			else if(expr.equals("<")) {
-				input += "\tjge "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
-				+ jump_list.get(1) + ":";
-			}
-			else if(expr.equals(">=")) {
-				input += "\tjl "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
-				+ jump_list.get(1) + ":";
-			}
-			else if(expr.equals("<=")) {
-				input += "\tjg "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
-				+ jump_list.get(1) + ":";
-			}
-			else if(expr.equals("==")) {
-				input += "\tjne "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
-				+ jump_list.get(1) + ":";
-			}
-			else if(expr.equals("!=")) {
-				input += "\tje "+ jump_list.get(1) + "\n\tjmp " + jump_list.get(0) + "\n" 
-				+ jump_list.get(1) + ":";
-			}
+			
 			input += "\n";
 			
+
 			
 			newTexts.put(ctx, input);
 		}
