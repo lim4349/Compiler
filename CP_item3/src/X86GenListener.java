@@ -32,7 +32,7 @@ public class X86GenListener extends MiniGoBaseListener {
 			program += "global main\n\n";
 			program += "section .data\n";		// data 영역 사용에 대한 구현 필요
 			// data 영역 사용에 대한 구현 필요
-			program += "section.text";
+			program += "section.text\n";
 			program += decl;
 		
 			newTexts.put(ctx, program);
@@ -106,12 +106,12 @@ public class X86GenListener extends MiniGoBaseListener {
 				
 				// 함수 에필로그 
 				func_decl += "\tmov esp, ebp\n";
-				func_decl += "\tpop ebp";
+				func_decl += "\tpop ebp\n";
 			
 				if(function_name.equals("main")) {	 // 정상 종료를 위해 exit(0) 추가
-					func_decl += "\tmov eax, 1";	// 시스템콜 번호
-					func_decl += "\tmvo ebx, 0";	// 인자가 0 : 정상 종료를 의미
-					func_decl += "\tint 80h";		// 시스템 콜
+					func_decl += "\tmov eax, 1\n";	// 시스템콜 번호
+					func_decl += "\tmvo ebx, 0\n";	// 인자가 0 : 정상 종료를 의미
+					func_decl += "\tint 80h\n";		// 시스템 콜
 				}
 				newTexts.put(ctx, func_decl);
 			}
