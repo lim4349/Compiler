@@ -23,7 +23,8 @@ public class X86Generator {
 		ParseTree tree = parser.program();
 		
 		ParseTreeWalker walker = new ParseTreeWalker();
-		walker.walk(new X86GenListener(), tree);
+		walker.walk(new X86GenListener(), tree);	// 변수 기록 용도
+		walker.walk(new X86GenListener(), tree);	// 코드 생성 용도
 	}
 	
 }
