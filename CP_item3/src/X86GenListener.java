@@ -82,7 +82,7 @@ public class X86GenListener extends MiniGoBaseListener{
 	
 	@Override
 	public void enterFun_decl(MiniGoParser.Fun_declContext ctx) {
-		System.out.println(ctx.getChildCount());
+		
 	}
 	
 	
@@ -291,6 +291,9 @@ public class X86GenListener extends MiniGoBaseListener{
 	
 	@Override
 	public void exitExpr(MiniGoParser.ExprContext ctx) {
+		String function_name = get_function_name(ctx);
+		
+		// expr Á¦ 1±ÔÄ¢
 		
 	}
 	
